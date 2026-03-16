@@ -12,9 +12,6 @@ function createPrismaClient() {
         : ["error"],
   });
 
-  // Eagerly connect to prevent connection pool issues
-  client.$connect();
-  
   return client;
 }
 

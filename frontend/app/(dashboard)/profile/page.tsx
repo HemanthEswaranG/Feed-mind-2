@@ -9,6 +9,13 @@ export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) redirect("/auth");
 
+  const enrichedSessionUser = session.user as {
+    firstName?: string;
+    lastName?: string;
+    locale?: string;
+    provider?: string;
+  };
+
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
   });
@@ -23,6 +30,10 @@ export default async function ProfilePage() {
           email: user.email,
           image: user.image || "",
           hasApiKey: !!user.customApiKey,
+          firstName: enrichedSessionUser.firstName || "",
+          lastName: enrichedSessionUser.lastName || "",
+          locale: enrichedSessionUser.locale || "",
+          provider: enrichedSessionUser.provider || "",
         }}
       />
     </div>

@@ -17,6 +17,10 @@ import { FileText, MessageSquare, TrendingUp, ShieldCheck } from "lucide-react";
 import { format, subDays, startOfDay } from "date-fns";
 
 export default async function DashboardPage() {
+  if (!process.env.DATABASE_URL) {
+    redirect("/auth?error=DatabaseNotConfigured");
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) redirect("/auth");
 

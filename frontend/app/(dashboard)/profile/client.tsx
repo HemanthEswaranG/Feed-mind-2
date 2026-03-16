@@ -17,6 +17,10 @@ interface ProfileClientProps {
     email: string;
     image: string;
     hasApiKey: boolean;
+    firstName?: string;
+    lastName?: string;
+    locale?: string;
+    provider?: string;
   };
 }
 
@@ -78,6 +82,33 @@ export function ProfileClient({ user }: ProfileClientProps) {
               <p className="font-medium text-lg">{user.name || "User"}</p>
               <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Google Profile Data</CardTitle>
+          <CardDescription>
+            Extracted from your Google sign-in and used across your workspace profile.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <p className="text-xs text-muted-foreground">First name</p>
+            <p className="text-sm font-medium">{user.firstName || "Not available"}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Last name</p>
+            <p className="text-sm font-medium">{user.lastName || "Not available"}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Locale</p>
+            <p className="text-sm font-medium">{user.locale || "Not available"}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Sign-in provider</p>
+            <p className="text-sm font-medium">{user.provider || "credentials"}</p>
           </div>
         </CardContent>
       </Card>

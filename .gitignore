@@ -25,10 +25,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env
-.env*.local
-
 # vercel
 .vercel
 
@@ -44,3 +40,10 @@ tmpclaude-*
 nul
 
 dist/
+
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example

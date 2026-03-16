@@ -20,6 +20,10 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  if (!process.env.DATABASE_URL) {
+    redirect("/auth?error=DatabaseNotConfigured");
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) redirect("/auth");
 

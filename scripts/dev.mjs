@@ -7,8 +7,12 @@
 import { spawn } from "child_process";
 import http from "http";
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const BASE = `http://localhost:${PORT}`;
+
+if (!process.env.NEXTAUTH_URL) {
+  process.env.NEXTAUTH_URL = BASE;
+}
 
 // All static routes in the app (slug routes are skipped — they need real ids)
 const ROUTES = [
