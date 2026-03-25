@@ -1,4 +1,7 @@
+import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+
+dotenv.config();
 
 const globalForPrisma = globalThis;
 
@@ -10,8 +13,12 @@ function createPrismaClient() {
         : ['error'],
   });
 
-  // Eagerly connect to prevent connection pool issues
-  client.$connect();
+  // Try an eager connect in development, but never crash the process on initial auth/network errors.
+  if (process.env.NODE_ENV !== 'production') {
+    client.$connect().catch((error) => {
+      console.error('[Prisma] Initial connection failed:', error.message);
+    });
+  }
   
   return client;
 }

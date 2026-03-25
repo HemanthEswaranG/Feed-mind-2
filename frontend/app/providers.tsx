@@ -1,6 +1,6 @@
 "use client";
 
-import { SessionProvider } from "next-auth/react";
+import { SessionProvider } from "@/src/compat/next-auth-react";
 import { Toaster } from "@/components/ui/toaster";
 import { useEffect } from "react";
 

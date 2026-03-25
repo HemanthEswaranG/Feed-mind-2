@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/src/compat/next-auth-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/src/compat/next-auth-react";
 import Link from "next/link";
 import { Bell, User, LogOut, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";

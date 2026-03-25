@@ -1,241 +1,96 @@
-"use server";
+import { getAuthToken } from "@/src/compat/next-auth-react";
 
-import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
-import { formSchema, questionSchema } from "@/lib/validations";
-import { z } from "zod";
-
-export type FormByIdResult = Prisma.FormGetPayload<{
-  include: {
-    questions: { orderBy: { order: "asc" } };
-    responses: {
-      include: { answers: true };
-      orderBy: { submittedAt: "desc" };
-    };
-    _count: { select: { responses: true } };
-  };
-}>;
-
-async function getCurrentUser() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) throw new Error("Unauthorized");
-  const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-  if (!user) throw new Error("User not found");
-  return user;
-}
-
-export async function createForm(data: {
+export type FormByIdResult = {
+  id: string;
   title: string;
-  description?: string;
-  questions: Array<{
-    type: string;
-    label: string;
-    placeholder?: string;
-    required: boolean;
-    options?: string[];
-    order: number;
-    aiGenerated?: boolean;
-  }>;
-  isAnonymous?: boolean;
-  allowMultiple?: boolean;
-  emailCollection?: "NONE" | "VERIFIED" | "INPUT";
-  expiresAt?: string | null;
-  theme?: object;
-}) {
-  const user = await getCurrentUser();
+  description?: string | null;
+  isPublished?: boolean;
+  questions?: unknown[];
+  responses?: unknown[];
+  _count?: { responses?: number };
+};
 
-  const form = await prisma.form.create({
-    data: {
-      title: data.title,
-      description: data.description,
-      userId: user.id,
-      isAnonymous: data.isAnonymous || false,
-      allowMultiple: data.allowMultiple || false,
-      emailCollection: data.emailCollection || "NONE",
-      expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
-      theme: data.theme as any,
-      questions: {
-        create: data.questions.map((q, i) => ({
-          type: q.type as any,
-          label: q.label,
-          placeholder: q.placeholder,
-          required: q.required,
-          options: q.options as any,
-          order: q.order ?? i,
-          aiGenerated: q.aiGenerated || false,
-        })),
-      },
-    },
-    include: { questions: true },
+type JsonBody = Record<string, unknown>;
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string> | undefined),
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(path, {
+    ...options,
+    headers,
   });
 
-  revalidatePath("/dashboard");
-  return form;
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const message =
+      typeof payload === "object" && payload && "error" in payload
+        ? String((payload as { error?: string }).error || "Request failed")
+        : "Request failed";
+    throw new Error(message);
+  }
+
+  return payload as T;
 }
 
-export async function updateForm(formId: string, data: {
-  title?: string;
-  description?: string;
-  isAnonymous?: boolean;
-  allowMultiple?: boolean;
-  emailCollection?: "NONE" | "VERIFIED" | "INPUT";
-  expiresAt?: string | null;
-  theme?: object;
-}) {
-  const user = await getCurrentUser();
-
-  const form = await prisma.form.findFirst({
-    where: { id: formId, userId: user.id },
+export async function createForm(data: JsonBody) {
+  return request<FormByIdResult>("/api/forms", {
+    method: "POST",
+    body: JSON.stringify(data),
   });
-  if (!form) throw new Error("Form not found");
+}
 
-  const updated = await prisma.form.update({
-    where: { id: formId },
-    data: {
-      title: data.title,
-      description: data.description,
-      isAnonymous: data.isAnonymous,
-      allowMultiple: data.allowMultiple,
-      emailCollection: data.emailCollection,
-      expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
-      theme: data.theme as any,
-    },
+export async function updateForm(formId: string, data: JsonBody) {
+  return request<FormByIdResult>(`/api/forms/${formId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
   });
-
-  revalidatePath(`/forms/${formId}`);
-  revalidatePath("/dashboard");
-  return updated;
 }
 
 export async function deleteForm(formId: string) {
-  const user = await getCurrentUser();
-
-  const form = await prisma.form.findFirst({
-    where: { id: formId, userId: user.id },
+  return request<{ success: boolean }>(`/api/forms/${formId}`, {
+    method: "DELETE",
   });
-  if (!form) throw new Error("Form not found");
-
-  await prisma.form.delete({ where: { id: formId } });
-  revalidatePath("/dashboard");
 }
 
-export async function publishForm(formId: string, publish: boolean) {
-  const user = await getCurrentUser();
-
-  const form = await prisma.form.findFirst({
-    where: { id: formId, userId: user.id },
+export async function publishForm(formId: string, _publish: boolean) {
+  return request<FormByIdResult>(`/api/forms/${formId}/publish`, {
+    method: "POST",
   });
-  if (!form) throw new Error("Form not found");
-
-  const updated = await prisma.form.update({
-    where: { id: formId },
-    data: { isPublished: publish },
-  });
-
-  revalidatePath(`/forms/${formId}`);
-  revalidatePath("/dashboard");
-  return updated;
 }
 
 export async function getUserForms() {
-  const user = await getCurrentUser();
-
-  return prisma.form.findMany({
-    where: { userId: user.id },
-    include: {
-      _count: { select: { responses: true } },
-      questions: { orderBy: { order: "asc" } },
-    },
-    orderBy: { updatedAt: "desc" },
+  return request<FormByIdResult[]>("/api/forms", {
+    method: "GET",
   });
 }
 
 export async function getFormById(formId: string): Promise<FormByIdResult | null> {
-  const user = await getCurrentUser();
-
-  return prisma.form.findFirst({
-    where: { id: formId, userId: user.id },
-    include: {
-      questions: { orderBy: { order: "asc" } },
-      responses: {
-        include: { answers: true },
-        orderBy: { submittedAt: "desc" },
-      },
-      _count: { select: { responses: true } },
-    },
+  return request<FormByIdResult>(`/api/forms/${formId}`, {
+    method: "GET",
   });
 }
 
-export async function addQuestion(formId: string, question: {
-  type: string;
-  label: string;
-  placeholder?: string;
-  required: boolean;
-  options?: string[];
-  order: number;
-  aiGenerated?: boolean;
-}) {
-  const user = await getCurrentUser();
-
-  const form = await prisma.form.findFirst({
-    where: { id: formId, userId: user.id },
-  });
-  if (!form) throw new Error("Form not found");
-
-  const created = await prisma.question.create({
-    data: {
-      formId,
-      type: question.type as any,
-      label: question.label,
-      placeholder: question.placeholder,
-      required: question.required,
-      options: question.options as any,
-      order: question.order,
-      aiGenerated: question.aiGenerated || false,
-    },
-  });
-
-  revalidatePath(`/forms/${formId}`);
-  return created;
+export async function addQuestion() {
+  throw new Error("Question-level API is not exposed in React migration mode yet.");
 }
 
-export async function updateQuestion(questionId: string, data: {
-  label?: string;
-  placeholder?: string;
-  required?: boolean;
-  options?: string[];
-  type?: string;
-}) {
-  const updated = await prisma.question.update({
-    where: { id: questionId },
-    data: {
-      label: data.label,
-      placeholder: data.placeholder,
-      required: data.required,
-      options: data.options as any,
-      type: data.type as any,
-    },
-  });
-
-  revalidatePath(`/forms/${updated.formId}`);
-  return updated;
+export async function updateQuestion() {
+  throw new Error("Question-level API is not exposed in React migration mode yet.");
 }
 
-export async function deleteQuestion(questionId: string) {
-  const question = await prisma.question.findUnique({ where: { id: questionId } });
-  if (!question) throw new Error("Question not found");
-
-  await prisma.question.delete({ where: { id: questionId } });
-  revalidatePath(`/forms/${question.formId}`);
+export async function deleteQuestion() {
+  throw new Error("Question-level API is not exposed in React migration mode yet.");
 }
 
-export async function reorderQuestions(formId: string, questionIds: string[]) {
-  const updates = questionIds.map((id, index) =>
-    prisma.question.update({ where: { id }, data: { order: index } })
-  );
-  await prisma.$transaction(updates);
-  revalidatePath(`/forms/${formId}`);
+export async function reorderQuestions() {
+  throw new Error("Question-level API is not exposed in React migration mode yet.");
 }

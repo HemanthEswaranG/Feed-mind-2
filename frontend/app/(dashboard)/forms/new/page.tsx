@@ -37,8 +37,7 @@ function NewFormPageInner() {
   const [emailCollection, setEmailCollection] = useState<"NONE" | "VERIFIED" | "INPUT">("NONE");
   const [showProgressBar, setShowProgressBar] = useState(true);
   const [shuffleQuestions, setShuffleQuestions] = useState(false);
-  const [botDetection, setBotDetection] = useState(true);
-  const [duplicateFilter, setDuplicateFilter] = useState(true);
+  const [restrictExtension, setRestrictExtension] = useState(true);
   const [emailOnSubmission, setEmailOnSubmission] = useState(true);
   const [slackWebhook, setSlackWebhook] = useState(false);
   const [thankYouMessage, setThankYouMessage] = useState("Thank you for your feedback! We really appreciate it.");
@@ -65,8 +64,7 @@ function NewFormPageInner() {
     formAccent,
     showProgressBar,
     shuffleQuestions,
-    botDetection,
-    duplicateFilter,
+    restrictExtension,
     emailOnSubmission,
     slackWebhook,
     thankYouMessage,
@@ -223,12 +221,12 @@ function NewFormPageInner() {
         <div className="overflow-y-auto">
           <button
             onClick={() => setFormSettingsOpen((v) => !v)}
-            className="w-full flex items-center gap-3 p-4 border-b border-border/50 text-left hover:bg-muted/20 transition-colors"
+            className="w-full h-14 flex items-center gap-3 px-3 py-2 border-b border-border/50 text-left hover:bg-muted/20 transition-colors"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
               <Sparkles className="h-4 w-4 text-primary" />
             </span>
-            <span className="inline-flex flex-col text-[16px] leading-[0.95] font-semibold text-primary">Form Settings</span>
+            <span className="inline-flex flex-col text-[16px] leading-tight font-semibold text-primary">Form Settings</span>
           </button>
 
           {formSettingsOpen && (
@@ -245,10 +243,10 @@ function NewFormPageInner() {
                       {allowMultiple ? "On" : "Off"}
                     </button>
                   </div>
-                  <div>
-                    <label className="mb-1 block text-muted-foreground text-xs">Collect email</label>
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="text-muted-foreground text-xs whitespace-nowrap">Collect email</label>
                     <select
-                      className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+                      className="h-7 w-32 rounded-md border border-border bg-background pl-2 pr-6 text-xs"
                       value={emailCollection}
                       onChange={(e) => setEmailCollection(e.target.value as "NONE" | "VERIFIED" | "INPUT")}
                     >
@@ -282,21 +280,12 @@ function NewFormPageInner() {
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Integrity and Spam</p>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Bot detection</span>
+                    <span className="text-muted-foreground">Restrict extension</span>
                     <button
-                      className={cn("rounded-full px-3 py-1 text-xs font-semibold", botDetection ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}
-                      onClick={() => setBotDetection((v) => !v)}
+                      className={cn("rounded-full px-3 py-1 text-xs font-semibold", restrictExtension ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}
+                      onClick={() => setRestrictExtension((v) => !v)}
                     >
-                      {botDetection ? "On" : "Off"}
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Duplicate filter</span>
-                    <button
-                      className={cn("rounded-full px-3 py-1 text-xs font-semibold", duplicateFilter ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}
-                      onClick={() => setDuplicateFilter((v) => !v)}
-                    >
-                      {duplicateFilter ? "On" : "Off"}
+                      {restrictExtension ? "On" : "Off"}
                     </button>
                   </div>
                 </div>
@@ -346,26 +335,6 @@ function NewFormPageInner() {
                       placeholder="https://yoursite.com/thanks"
                     />
                   </div>
-                  <div>
-                    <label className="mb-1 block text-muted-foreground text-xs">Form accent</label>
-                    <div className="flex gap-2">
-                      {[
-                        "#00ffe4",
-                        "#8b72ff",
-                        "#ff4f6e",
-                        "#ffb020",
-                        "#10e8a2",
-                      ].map((color) => (
-                        <button
-                          key={color}
-                          className={cn("h-5 w-5 rounded-full border", formAccent === color ? "border-foreground" : "border-transparent")}
-                          style={{ backgroundColor: color }}
-                          onClick={() => setFormAccent(color)}
-                          aria-label={`Set accent ${color}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -373,12 +342,12 @@ function NewFormPageInner() {
 
           <button
             onClick={() => setAiSuggestionOpen((v) => !v)}
-            className="w-full flex items-center gap-3 p-4 border-b border-border/50 text-left hover:bg-muted/20 transition-colors"
+            className="w-full h-14 flex items-center gap-3 px-3 py-2 border-b border-border/50 text-left hover:bg-muted/20 transition-colors"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-              <Sparkles className="h-5 w-5 text-primary" />
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
+              <Sparkles className="h-4 w-4 text-primary" />
             </span>
-            <span className="inline-flex flex-col text-[16px] leading-[0.95] font-semibold text-primary">AI Suggestion</span>
+            <span className="inline-flex flex-col text-[16px] leading-tight font-semibold text-primary">AI Suggestion</span>
           </button>
 
           {aiSuggestionOpen && (

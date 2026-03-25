@@ -54,8 +54,7 @@ export default function BuilderStage({
     collectEmail: false,
     progressBar: true,
     shuffleQuestions: false,
-    botDetection: true,
-    duplicateFilter: true,
+    restrictExtension: true,
     emailNotifications: true,
     slackWebhook: false,
   });
@@ -296,8 +295,7 @@ export default function BuilderStage({
               <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Spam Protection</div>
               <div className="space-y-3">
                 {[
-                  { key: 'botDetection', label: 'Bot detection' },
-                  { key: 'duplicateFilter', label: 'Duplicate filter' },
+                  { key: 'restrictExtension', label: 'Restrict extension' },
                 ].map((item) => (
                   <div key={item.key} className="flex items-center justify-between">
                     <span className="text-muted-foreground">{item.label}</span>

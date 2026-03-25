@@ -14,7 +14,7 @@ export default function SidebarShowcasePage() {
           </p>
           <ul className="space-y-3 text-slate-300">
             <li>✓ <strong>Respondents</strong> - Multiple responses, email collection, progress bar, shuffle questions</li>
-            <li>✓ <strong>Integrity & Spam</strong> - Extension restrictions and duplicate filtering</li>
+            <li>✓ <strong>Integrity & Spam</strong> - Bot detection and spam controls</li>
             <li>✓ <strong>Notifications</strong> - Email and Slack webhooks</li>
             <li>✓ <strong>Appearance</strong> - Thank you message and redirect URL</li>
             <li>✓ <strong>AI Suggestion</strong> - Provider selection and quick prompts</li>

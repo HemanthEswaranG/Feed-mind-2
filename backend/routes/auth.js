@@ -10,6 +10,48 @@ const googleClient = process.env.GOOGLE_CLIENT_ID
   : null;
 
 /**
+ * POST /api/auth/register
+ * Basic email registration endpoint for React client compatibility.
+ */
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email } = req.body;
+
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name: (typeof name === 'string' && name.trim()) ? name.trim() : email.split('@')[0],
+      },
+    });
+
+    const token = generateToken(user);
+
+    res.status(201).json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        image: user.image,
+      },
+      token,
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * POST /api/auth/login
  * Email-based login (creates user if doesn't exist)
  */

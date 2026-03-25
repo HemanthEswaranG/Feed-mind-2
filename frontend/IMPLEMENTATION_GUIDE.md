@@ -142,7 +142,6 @@ frontend/app/(dashboard)/forms/
 
 - **Spam Protection Section:**
   - Bot detection toggle
-  - Duplicate filter toggle
 
 - **Notifications Section:**
   - Email on submit toggle

@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/src/compat/next-auth-react";
 import { cn } from "@/lib/utils";
 import {
   Sparkles,

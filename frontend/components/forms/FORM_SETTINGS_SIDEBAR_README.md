@@ -20,8 +20,7 @@ The **FormSettingsSidebar** is a full-featured settings panel for the form build
    - Shuffle Questions toggle
 
 2. **INTEGRITY AND SPAM**
-   - Restrict Extension toggle (prevent form extensions)
-   - Duplicate Filter toggle (block duplicate submissions)
+  - Bot detection toggle
 
 3. **NOTIFICATIONS**
    - Email on Submission toggle
@@ -96,8 +95,7 @@ interface FormSettings {
   collectEmail: 'do-not-collect' | 'optional' | 'required';
   showProgressBar: boolean;
   shuffleQuestions: boolean;
-  restrictExtension: boolean;
-  duplicateFilter: boolean;
+  botDetection: boolean;
   emailOnSubmission: boolean;
   slackWebhook: boolean;
   thankYouMessage: string;

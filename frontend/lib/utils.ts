@@ -1,40 +1,24 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { createHash, createCipheriv, createDecipheriv, randomBytes } from "crypto";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export function hashIP(ip: string): string {
-  return createHash("sha256").update(ip).digest("hex");
-}
-
-const ALGORITHM = "aes-256-gcm";
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "default-key-change-in-production!";
-
-function getKey(): Buffer {
-  return createHash("sha256").update(ENCRYPTION_KEY).digest();
+  let hash = 5381;
+  for (let i = 0; i < ip.length; i += 1) {
+    hash = (hash * 33) ^ ip.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(16);
 }
 
 export function encrypt(text: string): string {
-  const iv = randomBytes(16);
-  const cipher = createCipheriv(ALGORITHM, getKey(), iv);
-  let encrypted = cipher.update(text, "utf8", "hex");
-  encrypted += cipher.final("hex");
-  const authTag = cipher.getAuthTag().toString("hex");
-  return `${iv.toString("hex")}:${authTag}:${encrypted}`;
+  return btoa(unescape(encodeURIComponent(text)));
 }
 
 export function decrypt(encryptedText: string): string {
-  const [ivHex, authTagHex, encrypted] = encryptedText.split(":");
-  const iv = Buffer.from(ivHex, "hex");
-  const authTag = Buffer.from(authTagHex, "hex");
-  const decipher = createDecipheriv(ALGORITHM, getKey(), iv);
-  decipher.setAuthTag(authTag);
-  let decrypted = decipher.update(encrypted, "hex", "utf8");
-  decrypted += decipher.final("utf8");
-  return decrypted;
+  return decodeURIComponent(escape(atob(encryptedText)));
 }
 
 export function formatDate(date: Date | string): string {

@@ -18,8 +18,7 @@ export function FormSettingsSidebar({ onSettingsChange }: FormSettingsSidebarPro
     collectEmail: 'do-not-collect',
     showProgressBar: true,
     shuffleQuestions: false,
-    botDetection: true,
-    duplicateFilter: true,
+    restrictExtension: true,
     geoRestriction: false,
   });
 
@@ -42,7 +41,7 @@ export function FormSettingsSidebar({ onSettingsChange }: FormSettingsSidebarPro
   };
 
   return (
-    <aside className="fixed right-0 top-14 h-[calc(100vh-56px)] w-80 bg-[#05070d] border-l border-white/10 overflow-y-auto z-30">
+    <aside className="fixed right-0 top-14 h-[calc(100vh-56px)] w-80 bg-[#05070d] border-l border-white/10 z-30 flex flex-col overflow-hidden">
       <button
         onClick={() => setFormSettingsOpen((v) => !v)}
         className="w-full flex items-center gap-3 px-6 py-6 border-b border-white/10 text-left hover:bg-white/[0.02] transition-colors"
@@ -58,7 +57,7 @@ export function FormSettingsSidebar({ onSettingsChange }: FormSettingsSidebarPro
       {formSettingsOpen && (
         <div className="px-4 py-4 space-y-6 border-b border-white/10 bg-slate-900/20">
           <div>
-            <div className="px-0 pb-3 flex items-center gap-2">
+            <div className="px-0 pb-3 -mt-1 flex items-center gap-2">
               <Radio className="w-4 h-4 text-slate-400" />
               <span className="text-xs font-bold text-slate-400 tracking-widest uppercase">Respondents</span>
             </div>
@@ -118,33 +117,20 @@ export function FormSettingsSidebar({ onSettingsChange }: FormSettingsSidebarPro
           </div>
 
           <div>
-            <div className="px-0 pb-3 flex items-center gap-2">
+            <div className="px-0 pb-3 -mt-1 flex items-center gap-2">
               <SettingsIcon className="w-4 h-4 text-slate-400" />
               <span className="text-xs font-bold text-slate-400 tracking-widest uppercase">Integrity and Spam</span>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-slate-300 text-sm cursor-pointer">Bot detection</Label>
+                <Label className="text-slate-300 text-sm cursor-pointer">Restrict extension</Label>
                 <div className="flex items-center gap-2">
                   <Switch
-                    checked={settings.botDetection}
-                    onCheckedChange={() => handleToggleSetting('botDetection')}
+                    checked={settings.restrictExtension}
+                    onCheckedChange={() => handleToggleSetting('restrictExtension')}
                   />
-                  <span className={`text-xs font-bold px-2 py-1 rounded ${settings.botDetection ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-700/50 text-slate-500'}`}>
-                    {settings.botDetection ? 'On' : 'Off'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label className="text-slate-300 text-sm cursor-pointer">Duplicate filter</Label>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={settings.duplicateFilter}
-                    onCheckedChange={() => handleToggleSetting('duplicateFilter')}
-                  />
-                  <span className={`text-xs font-bold px-2 py-1 rounded ${settings.duplicateFilter ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-700/50 text-slate-500'}`}>
-                    {settings.duplicateFilter ? 'On' : 'Off'}
+                  <span className={`text-xs font-bold px-2 py-1 rounded ${settings.restrictExtension ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-700/50 text-slate-500'}`}>
+                    {settings.restrictExtension ? 'On' : 'Off'}
                   </span>
                 </div>
               </div>
@@ -188,7 +174,7 @@ export function FormSettingsSidebar({ onSettingsChange }: FormSettingsSidebarPro
           </div>
 
           {/* Provider Selection */}
-          <div className="space-y-2">
+          <div className="space-y-2 -mt-1">
             <Label className="text-slate-400 text-xs font-bold tracking-wider uppercase">Provider</Label>
             <select
               defaultValue="gemini"
@@ -201,7 +187,7 @@ export function FormSettingsSidebar({ onSettingsChange }: FormSettingsSidebarPro
           </div>
 
           {/* Quick Prompts */}
-          <div className="space-y-2">
+          <div className="space-y-2 -mt-1">
             <Label className="text-slate-400 text-xs font-bold tracking-wider uppercase">Quick Prompts</Label>
             <div className="space-y-2">
               <Button

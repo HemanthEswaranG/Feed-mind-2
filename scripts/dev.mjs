@@ -1,6 +1,6 @@
 /**
  * Dev server launcher with route pre-warming.
- * Starts `next dev --turbo`, waits until ready, then pre-compiles every
+ * Starts `vite`, waits until ready, then pre-warms every
  * known route so the first click is instant.
  */
 
@@ -22,10 +22,8 @@ const ROUTES = [
   "/forms/new",
 ];
 
-// ── Start next dev --turbo ─────────────────────────────────────────────────
-// Spawn next dev --turbo; embed all args in the command string so Node's
-// shell-escaping deprecation warning is not triggered.
-const next = spawn(`npx next dev --turbo --port ${PORT}`, {
+// ── Start Vite dev server ──────────────────────────────────────────────────
+const next = spawn(`npx vite --port ${PORT}`, {
   stdio: ["inherit", "pipe", "pipe"],
   shell: true,
 });
@@ -34,7 +32,8 @@ let ready = false;
 
 const forward = (chunk) => {
   process.stdout.write(chunk);
-  if (!ready && chunk.toString().includes("Ready in")) {
+  const line = chunk.toString().toLowerCase();
+  if (!ready && line.includes("ready in")) {
     ready = true;
     warmup();
   }
@@ -50,7 +49,7 @@ process.on("SIGTERM", () => next.kill("SIGTERM"));
 function waitForServer(retries = 30) {
   return new Promise((resolve, reject) => {
     const attempt = () => {
-      const req = http.get(`${BASE}/api/auth/providers`, (res) => {
+      const req = http.get(`${BASE}/auth`, (res) => {
         res.resume();
         resolve();
       });

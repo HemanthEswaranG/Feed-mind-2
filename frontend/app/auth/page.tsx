@@ -1,6 +1,6 @@
 "use client";
 
-import { getProviders, signIn } from "next-auth/react";
+import { getProviders, signIn } from "@/src/compat/next-auth-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,6 @@ export default function AuthPage() {
   const [error, setError] = useState("");
   const [hasGoogleProvider, setHasGoogleProvider] = useState(false);
   const [loadingProviders, setLoadingProviders] = useState(true);
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -60,11 +59,9 @@ export default function AuthPage() {
     setIsLoading(true);
     setError("");
     try {
-      const res = await signIn("credentials", { email, password, redirect: false });
+      const res = await signIn("credentials", { email, password, callbackUrl: "/dashboard" });
       if (res?.error) {
         setError("Invalid email or password.");
-      } else {
-        router.push("/dashboard");
       }
     } catch {
       setError("Something went wrong. Please try again.");

@@ -1,127 +1,80 @@
-"use server";
+import { getAuthToken } from "@/src/compat/next-auth-react";
 
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { hashIP } from "@/lib/utils";
-import { revalidatePath } from "next/cache";
+type RequestOptions = RequestInit & {
+  skipContentType?: boolean;
+};
 
-export async function submitResponse(formId: string, data: {
-  answers: Array<{ questionId: string; value: string }>;
-  ipAddress?: string;
-  metadata?: object;
-}) {
-  const form = await prisma.form.findUnique({
-    where: { id: formId },
-    include: { questions: true },
-  });
+async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    ...(options.skipContentType ? {} : { "Content-Type": "application/json" }),
+    ...(options.headers as Record<string, string> | undefined),
+  };
 
-  if (!form) throw new Error("Form not found");
-  if (!form.isPublished) throw new Error("Form is not published");
-  if (form.expiresAt && new Date() > form.expiresAt) throw new Error("Form has expired");
-
-  const ipHash = data.ipAddress ? hashIP(data.ipAddress) : null;
-
-  if (!form.allowMultiple && ipHash) {
-    const existing = await prisma.response.findFirst({
-      where: { formId, ipHash },
-    });
-    if (existing) throw new Error("You have already submitted a response");
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await prisma.response.create({
-    data: {
-      formId,
-      ipHash,
-      metadata: data.metadata as any,
-      answers: {
-        create: data.answers.map((a) => ({
-          questionId: a.questionId,
-          value: a.value,
-        })),
-      },
-    },
-    include: { answers: true },
+  const response = await fetch(path, {
+    ...options,
+    headers,
   });
 
-  revalidatePath(`/forms/${formId}/responses`);
-  revalidatePath(`/forms/${formId}/analytics`);
-  revalidatePath("/responses");
-  revalidatePath("/analytics");
-  return response;
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const message =
+      typeof payload === "object" && payload && "error" in payload
+        ? String((payload as { error?: string }).error || "Request failed")
+        : "Request failed";
+    throw new Error(message);
+  }
+
+  return payload as T;
+}
+
+export async function submitResponse(
+  formId: string,
+  data: {
+    answers: Array<{ questionId: string; value: string }>;
+    respondentEmail?: string;
+    metadata?: object;
+  }
+) {
+  return request<{ success: boolean; responseId: string }>(`/api/submit/${formId}`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
 export async function getFormResponses(formId: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) throw new Error("Unauthorized");
-
-  const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-  if (!user) throw new Error("User not found");
-
-  const form = await prisma.form.findFirst({
-    where: { id: formId, userId: user.id },
+  return request<Array<unknown>>(`/api/forms/${formId}/responses`, {
+    method: "GET",
   });
-  if (!form) throw new Error("Form not found");
+}
 
-  return prisma.response.findMany({
-    where: { formId },
-    include: {
-      answers: {
-        include: { question: true },
-      },
-    },
-    orderBy: { submittedAt: "desc" },
+export async function getAllResponses() {
+  return request<Array<unknown>>("/api/forms/responses/all", {
+    method: "GET",
   });
 }
 
 export async function markResponseAsSpam(responseId: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) throw new Error("Unauthorized");
-
-  const response = await prisma.response.findUnique({
-    where: { id: responseId },
-    include: { form: true },
+  return request(`/api/forms/responses/${responseId}/spam`, {
+    method: "PATCH",
+    body: JSON.stringify({}),
   });
-  if (!response) throw new Error("Response not found");
-
-  const updated = await prisma.response.update({
-    where: { id: responseId },
-    data: { isSpam: true },
-  });
-
-  revalidatePath(`/forms/${response.formId}/responses`);
-  revalidatePath("/responses");
-  revalidatePath("/analytics");
-  return updated;
 }
 
 export async function flagResponse(responseId: string, flagged: boolean) {
-  const response = await prisma.response.findUnique({
-    where: { id: responseId },
-    include: { form: true },
+  return request(`/api/forms/responses/${responseId}/flag`, {
+    method: "PATCH",
+    body: JSON.stringify({ flagged }),
   });
-  if (!response) throw new Error("Response not found");
-
-  const updated = await prisma.response.update({
-    where: { id: responseId },
-    data: { isFlagged: flagged },
-  });
-
-  revalidatePath(`/forms/${response.formId}/responses`);
-  revalidatePath("/responses");
-  revalidatePath("/analytics");
-  return updated;
 }
 
 export async function deleteResponse(responseId: string) {
-  const response = await prisma.response.findUnique({
-    where: { id: responseId },
-    include: { form: true },
+  return request<{ success: boolean }>(`/api/forms/responses/${responseId}`, {
+    method: "DELETE",
   });
-  if (!response) throw new Error("Response not found");
-
-  await prisma.response.delete({ where: { id: responseId } });
-  revalidatePath(`/forms/${response.formId}/responses`);
-  revalidatePath("/responses");
-  revalidatePath("/analytics");
 }

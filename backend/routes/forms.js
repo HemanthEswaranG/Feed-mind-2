@@ -62,6 +62,158 @@ router.post('/', authenticateUser, async (req, res) => {
 });
 
 /**
+ * GET /api/forms/responses/all
+ * Get all responses across the authenticated user's forms
+ */
+router.get('/responses/all', authenticateUser, async (req, res) => {
+  try {
+    const responses = await prisma.response.findMany({
+      where: {
+        form: {
+          userId: req.user.id,
+        },
+      },
+      include: {
+        form: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        answers: {
+          include: {
+            question: {
+              select: {
+                id: true,
+                label: true,
+                type: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { submittedAt: 'desc' },
+    });
+
+    const mapped = responses.map((response) => ({
+      id: response.id,
+      formId: response.formId,
+      formTitle: response.form.title,
+      submittedAt: response.submittedAt,
+      integrityScore: response.integrityScore,
+      sentimentScore: response.sentimentScore,
+      isSpam: response.isSpam,
+      isFlagged: response.isFlagged,
+      respondent:
+        (response.metadata && typeof response.metadata === 'object' && response.metadata.respondentEmail) ||
+        'Anonymous',
+      preview: response.answers[0]?.value || 'No response text',
+      answers: response.answers.map((answer) => ({
+        questionId: answer.questionId,
+        questionLabel: answer.question?.label || 'Question',
+        questionType: answer.question?.type || 'SHORT_TEXT',
+        value: answer.value,
+      })),
+    }));
+
+    res.json(mapped);
+  } catch (error) {
+    console.error('Get all responses error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PATCH /api/forms/responses/:responseId/spam
+ * Mark a response as spam
+ */
+router.patch('/responses/:responseId/spam', authenticateUser, async (req, res) => {
+  try {
+    const { responseId } = req.params;
+
+    const existing = await prisma.response.findFirst({
+      where: {
+        id: responseId,
+        form: { userId: req.user.id },
+      },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Response not found' });
+    }
+
+    const updated = await prisma.response.update({
+      where: { id: responseId },
+      data: { isSpam: true },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Mark spam error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PATCH /api/forms/responses/:responseId/flag
+ * Toggle flagged state for a response
+ */
+router.patch('/responses/:responseId/flag', authenticateUser, async (req, res) => {
+  try {
+    const { responseId } = req.params;
+    const { flagged } = req.body;
+
+    const existing = await prisma.response.findFirst({
+      where: {
+        id: responseId,
+        form: { userId: req.user.id },
+      },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Response not found' });
+    }
+
+    const updated = await prisma.response.update({
+      where: { id: responseId },
+      data: { isFlagged: Boolean(flagged) },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Flag response error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/forms/responses/:responseId
+ * Delete a response belonging to one of the user's forms
+ */
+router.delete('/responses/:responseId', authenticateUser, async (req, res) => {
+  try {
+    const { responseId } = req.params;
+
+    const existing = await prisma.response.findFirst({
+      where: {
+        id: responseId,
+        form: { userId: req.user.id },
+      },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Response not found' });
+    }
+
+    await prisma.response.delete({ where: { id: responseId } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete response error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * GET /api/forms/:formId
  * Get a specific form
  */
