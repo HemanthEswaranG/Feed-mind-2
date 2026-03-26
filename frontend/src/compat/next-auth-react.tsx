@@ -20,6 +20,11 @@ type AuthContextValue = {
 const AUTH_TOKEN_KEY = "feedmind_auth_token";
 const AUTH_USER_KEY = "feedmind_auth_user";
 const AUTH_CHANGED_EVENT = "feedmind-auth-changed";
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001").replace(/\/$/, "");
+
+function apiUrl(path: string) {
+  return `${API_BASE_URL}${path}`;
+}
 
 function notifyAuthChanged() {
   if (typeof window !== "undefined") {
@@ -122,7 +127,7 @@ export async function signIn(provider: string, options?: Record<string, unknown>
       return { error: "Email is required", ok: false, status: 400 };
     }
 
-    const response = await fetch("/api/auth/login", {
+    const response = await fetch(apiUrl("/api/auth/login"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -158,7 +163,7 @@ export async function signOut(options?: { redirect?: boolean; callbackUrl?: stri
   clearAuth();
 
   try {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await fetch(apiUrl("/api/auth/logout"), { method: "POST" });
   } catch {
     // Ignore network errors when local state is already cleared.
   }
